@@ -1,5 +1,5 @@
 
-(in-package #:darts.lib.calendar-internals)
+(in-package #:deterministic-arts.calendar.internals)
 
 (defmethod print-object ((object calendar:zone) stream)
   (print-unreadable-object (object stream :type nil :identity t)

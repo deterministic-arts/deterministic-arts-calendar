@@ -21,7 +21,7 @@
   THE SOFTWARE.
 |#
 
-(in-package #:darts.lib.calendar-internals)
+(in-package #:deterministic-arts.calendar.internals)
 
 (defstruct (calendar:instant (:copier nil) (:conc-name instant-) (:predicate calendar:instantp)
                              (:constructor make-instant (epoch-second &optional (nanos 0))))
@@ -187,6 +187,34 @@
   `(make-duration ,(duration-seconds object) ,(duration-nanos object)))
 
 
+(defun compare-reals (object1 object2)
+  (cond
+    ((< object1 object2) -1)
+    ((> object1 object2) 1)
+    (t 0)))
+
+(macrolet ((define-compare (name &rest fields)
+             (labels
+                 ((cmp-field (spec)
+                    (multiple-value-bind (getter cmp)
+                        (if (atom spec)
+                            (values spec 'compare-reals)
+                            (values (first spec) (second spec)))
+                      `(,cmp (,getter object1) (,getter object2)))))
+             `(defun ,name (object1 object2)
+                ,(let* ((chain (reverse fields))
+                        (last (car chain)))
+                    (reduce (lambda (tail spec)
+                              (let ((temp (gensym)))
+                                `(let ((,temp ,(cmp-field spec)))
+                                   (if (zerop ,temp) ,tail ,temp))))
+                            (cdr chain) :initial-value last))))))
+  (define-compare compare-dates date-year date-month date-day)
+  (define-compare compare-times time-hour time-minute time-second time-nanos)
+  (define-compare compare-instants instant-epoch-second instant-nanos)
+  (define-compare compare-durations duration-seconds duration-nanos)
+  (define-compare compare-timestamps (timestamp-date compare-dates) (timestamp-time compare-times)))
+
 (macrolet ((define-equality (name &rest fields)
              `(defun ,name (object1 object2)
                 (and ,@(mapcar (lambda (field)
@@ -202,58 +230,40 @@
   (define-equality duration= duration-seconds duration-nanos)
   (define-equality timestamp= (timestamp-date date=) (timestamp-time time=)))
 
-(macrolet ((define-earlierp (name &rest fields)
-             (labels
-                 ((walk (field fields)
-                    (multiple-value-bind (getter lessp equalp)
-                        (if (atom field)
-                            (values field '< 'eql)
-                            (values (car field) (cadr field) (caddr field)))
-                      (if (null fields)
-                          `(,lessp (,getter object1) (,getter object2))
-                          (let ((temp1 (gensym))
-                                (temp2 (gensym)))
-                            `(let ((,temp1 (,getter object1))
-                                   (,temp2 (,getter object2)))
-                               (or (,lessp ,temp1 ,temp2)
-                                   (and (,equalp ,temp1 ,temp2)
-                                        ,(walk (car fields) (cdr fields))))))))))
-               `(defun ,name (object1 object2)
-                  ,(walk (car fields) (cdr fields))))))
-  (define-earlierp date< date-year date-month date-day)
-  (define-earlierp time< time-hour time-minute time-second time-nanos)
-  (define-earlierp timestamp< (timestamp-date date< date=) (timestamp-time time< time=))
-  (define-earlierp instant< instant-epoch-second instant-nanos)
-  (define-earlierp duration< duration-seconds duration-nanos))
-
-(declaim (inline date/= date<= date>= date> time/= time<= time>= time> timestamp/=
-                 timestamp<= timestamp>= timestamp> instant/= instant<= instant>=
-                 instant> duration/= duration<= duration>= duration>))
+(declaim (inline date/= datey< date<= date>= date> time/= time< time<= time>= time>
+                 timestamp/= timestamp< timestamp<= timestamp>= timestamp>
+                 instant/= instant< instant<= instant>= instant>
+                 duration/= duration< duration<= duration>= duration>))
 
 (defun date/= (object1 object2) (not (date= object1 object2)))
-(defun date<= (object1 object2) (not (date< object2 object1)))
-(defun date>= (object1 object2) (not (date< object1 object2)))
-(defun date> (object1 object2) (date< object2 object1))
+(defun date< (object1 object2) (< (compare-dates object1 object2) 0))
+(defun date<= (object1 object2) (<= (compare-dates object1 object2) 0))
+(defun date>= (object1 object2) (>= (compare-dates object1 object2) 0))
+(defun date> (object1 object2) (> (compare-dates object1 object2) 0))
 
 (defun time/= (object1 object2) (not (time= object1 object2)))
-(defun time<= (object1 object2) (not (time< object2 object1)))
-(defun time>= (object1 object2) (not (time< object1 object2)))
-(defun time> (object1 object2) (time< object2 object1))
+(defun time< (object1 object2) (< (compare-times object1 object2) 0))
+(defun time<= (object1 object2) (<= (compare-times object1 object2) 0))
+(defun time>= (object1 object2) (>= (compare-times object1 object2) 0))
+(defun time> (object1 object2) (> (compare-times object1 object2) 0))
 
 (defun timestamp/= (object1 object2) (not (timestamp= object1 object2)))
-(defun timestamp<= (object1 object2) (not (timestamp< object2 object1)))
-(defun timestamp>= (object1 object2) (not (timestamp< object1 object2)))
-(defun timestamp> (object1 object2) (timestamp< object2 object1))
+(defun timestamp< (object1 object2) (< (compare-timestamps object1 object2) 0))
+(defun timestamp<= (object1 object2) (<= (compare-timestamps object1 object2) 0))
+(defun timestamp>= (object1 object2) (>= (compare-timestamps object1 object2) 0))
+(defun timestamp> (object1 object2) (> (compare-timestamps object1 object2) 0))
 
 (defun instant/= (object1 object2) (not (instant= object1 object2)))
-(defun instant<= (object1 object2) (not (instant< object2 object1)))
-(defun instant>= (object1 object2) (not (instant< object1 object2)))
-(defun instant> (object1 object2) (instant< object2 object1))
+(defun instant< (object1 object2) (< (compare-instants object1 object2) 0))
+(defun instant<= (object1 object2) (<= (compare-instants object1 object2) 0))
+(defun instant>= (object1 object2) (>= (compare-instants object1 object2) 0))
+(defun instant> (object1 object2) (> (compare-instants object1 object2) 0))
 
 (defun duration/= (object1 object2) (not (duration= object1 object2)))
-(defun duration<= (object1 object2) (not (duration< object2 object1)))
-(defun duration>= (object1 object2) (not (duration< object1 object2)))
-(defun duration> (object1 object2) (duration< object2 object1))
+(defun duration< (object1 object2) (< (compare-durations object1 object2) 0))
+(defun duration<= (object1 object2) (<= (compare-durations object1 object2) 0))
+(defun duration>= (object1 object2) (>= (compare-durations object1 object2) 0))
+(defun duration> (object1 object2) (> (compare-durations object1 object2) 0))
 
 (defun date-hash (object)
   (logand most-positive-fixnum
@@ -291,20 +301,20 @@
 
 
 
-(define-constant calendar:midnight (make-time 0 0 0 0) :test #'time=)
-(define-constant calendar:min-time calendar:midnight :test #'time=)
-(define-constant calendar:max-time (make-time 23 59 59 999999999) :test #'time=)
-(define-constant calendar:noon (make-time 12 0 0 0) :test #'time=)
-(define-constant calendar:min-date (make-date calendar:min-year 1 1) :test #'date=)
-(define-constant calendar:max-date (make-date calendar:max-year 12 31) :test #'date=)
-(define-constant calendar:epoch-date (make-date 2000 3 1) :test #'date=)
-(define-constant calendar:min-timestamp (make-timestamp calendar:min-date calendar:min-time) :test #'timestamp=)
-(define-constant calendar:max-timestamp (make-timestamp calendar:max-date calendar:max-time) :test #'timestamp=)
-(define-constant calendar:epoch-timestamp (make-timestamp calendar:epoch-date calendar:midnight) :test #'timestamp=)
-(define-constant calendar:min-instant (make-instant calendar:min-epoch-second 0) :test #'instant=)
-(define-constant calendar:max-instant (make-instant calendar:max-epoch-second 999999999) :test #'instant=)
-(define-constant calendar:epoch-instant (make-instant 0 0) :test #'instant=)
-(define-constant calendar:zero-duration (make-duration 0 0) :test #'duration=)
+(defvar calendar:midnight (make-time 0 0 0 0))
+(defvar calendar:min-time calendar:midnight)
+(defvar calendar:max-time (make-time 23 59 59 999999999))
+(defvar calendar:noon (make-time 12 0 0 0))
+(defvar calendar:min-date (make-date calendar:min-year 1 1))
+(defvar calendar:max-date (make-date calendar:max-year 12 31))
+(defvar calendar:epoch-date (make-date 2000 3 1))
+(defvar calendar:min-timestamp (make-timestamp calendar:min-date calendar:min-time))
+(defvar calendar:max-timestamp (make-timestamp calendar:max-date calendar:max-time))
+(defvar calendar:epoch-timestamp (make-timestamp calendar:epoch-date calendar:midnight))
+(defvar calendar:min-instant (make-instant calendar:min-epoch-second 0))
+(defvar calendar:max-instant (make-instant calendar:max-epoch-second 999999999))
+(defvar calendar:epoch-instant (make-instant 0 0))
+(defvar calendar:zero-duration (make-duration 0 0))
 
 
 (defun convert-utc-epoch-second-to-local (utc-epoch-second zone-or-offset)
@@ -590,11 +600,20 @@
 (defmethod calendar:hash ((object calendar:timestamp)) (timestamp-hash object))
 (defmethod calendar:hash ((object calendar:instant)) (instant-hash object))
 
-(defmethod calendar:lessp ((object1 calendar:date) (object2 calendar:date)) (date< object1 object2))
-(defmethod calendar:lessp ((object1 calendar:time) (object2 calendar:time)) (time< object1 object2))
-(defmethod calendar:lessp ((object1 calendar:timestamp) (object2 calendar:timestamp)) (timestamp< object1 object2))
-(defmethod calendar:lessp ((object1 calendar:instant) (object2 calendar:instant)) (instant< object1 object2))
-(defmethod calendar:lessp ((object1 calendar:duration) (object2 calendar:duration)) (duration< object1 object2))
+(defmethod calendar:compare ((object1 calendar:date) (object2 calendar:date))
+  (compare-dates object1 object2))
+
+(defmethod calendar:compare ((object1 calendar:time) (object2 calendar:time))
+  (compare-times object1 object2))
+
+(defmethod calendar:compare ((object1 calendar:timestamp) (object2 calendar:timestamp))
+  (compare-timestamps object1 object2))
+
+(defmethod calendar:compare ((object1 calendar:instant) (object2 calendar:instant))
+  (compare-instants object1 object2))
+
+(defmethod calendar:compare ((object1 calendar:duration) (object2 calendar:duration))
+  (compare-durations object1 object2))
 
 (defmethod calendar:day-of-year ((object calendar:timestamp))
   (calendar:day-of-year (timestamp-date object)))

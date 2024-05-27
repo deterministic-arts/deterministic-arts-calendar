@@ -21,19 +21,15 @@
   THE SOFTWARE.
 |#
 
-(in-package #:common-lisp-user)
-(defpackage #:darts.asdf (:use #:common-lisp #:asdf))
-(in-package #:darts.asdf)
-
-(defsystem :darts.lib.gregorian.local-time-support
-  :name "darts.lib.gregorian.local-time-support"
+(defsystem :deterministic-arts.calendar.local-time-support
+  :name "deterministic-arts.calendar.local-time-support"
   :author "Dirk Esser"
   :version "0.1"
   :maintainer "Dirk Esser"
   :licence "MIT"
   :description "Support functions for interop with the LOCAL-TIME library"
   :long-description ""
-  :depends-on (#:darts.lib.gregorian #:local-time)
+  :depends-on (#:deterministic-arts.calendar #:local-time)
   :serial t
   :components
   ((:module :src

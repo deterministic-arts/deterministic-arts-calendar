@@ -21,7 +21,7 @@
   THE SOFTWARE.
 |#
 
-(in-package #:darts.lib.calendar-internals)
+(in-package #:deterministic-arts.calendar.internals)
 
 (defconstant calendar:sunday 0)
 (defconstant calendar:monday 1)
@@ -77,13 +77,13 @@
 (defgeneric calendar:time (object &key zone date time))
 (defgeneric calendar:timestamp (object &key zone date time))
 
+(defgeneric calendar:compare (object1 object2))
+
 (defgeneric calendar:equal (object1 object2)
   (:method (object1 object2) (equal object1 object2)))
 
 (defgeneric calendar:hash (object)
   (:method (object) (sxhash object)))
-
-(defgeneric calendar:lessp (object1 object2))
 
 (defgeneric calendar:add-seconds (object seconds &optional nanos))
 
@@ -108,14 +108,29 @@
 (defun calendar:nanosecond (object)
   (mod (calendar:nanos object) 1000))
 
-(defun calendar:greaterp (object1 object2)
-  (calendar:lessp object2 object1))
+(defun calendar:earlierp (object1 object2)
+  (< (calendar:compare object2 object1) 0))
 
-(defun calendar:not-lessp (object1 object2)
-  (not (calendar:lessp object1 object2)))
+(defun calendar:laterp (object1 object2)
+  (> (calendar:compare object2 object1) 0))
 
-(defun calendar:not-greaterp (object1 object2)
-  (not (calendar:lessp object2 object1)))
+(defun calendar:not-earlierp (object1 object2)
+  (>= (calendar:compare object1 object2) 0))
+
+(defun calendar:not-laterp (object1 object2)
+  (<= (calendar:compare object1 object2) 0))
+
+(defun calendar:shorterp (object1 object2)
+  (< (calendar:compare object2 object1) 0))
+
+(defun calendar:longerp (object1 object2)
+  (> (calendar:compare object2 object1) 0))
+
+(defun calendar:not-shorterp (object1 object2)
+  (>= (calendar:compare object1 object2) 0))
+
+(defun calendar:not-longerp (object1 object2)
+  (<= (calendar:compare object1 object2) 0))
 
 (defun calendar:subtract-seconds (object seconds &optional (nanos 0))
   (calendar:add-seconds object (- seconds) (- nanos)))

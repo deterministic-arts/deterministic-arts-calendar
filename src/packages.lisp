@@ -21,28 +21,29 @@
   THE SOFTWARE.
 |#
 
-(defpackage #:darts.lib.calendar
+(defpackage #:deterministic-arts.calendar
   (:use)
   (:export #:date #:datep #:make-date #:time #:timep #:make-time #:timestamp
            #:timestampp #:make-timestamp #:instant #:instantp #:make-instant
            #:zone #:zonep #:year #:month #:day #:weekday #:hour #:minute #:second
            #:seconds #:millisecond #:microsecond #:nanosecond #:nanos #:expression
            #:epoch-second #:encode-epoch-second #:decode-epoch-second #:equal
-           #:hash #:lessp #:greaterp #:not-lessp #:not-greaterp #:monday #:tuesday
-           #:wednesday #:thursday #:friday #:saturday #:sunday #:january #:february
-           #:march #:april #:may #:june #:july #:august #:september #:october
-           #:november #:december #:leap-year-p #:days-in-month #:min-year #:max-year
-           #:min-epoch-second #:max-epoch-second #:now #:*zone* #:current-instant
-           #:current-date #:current-time #:current-timestamp #:add-seconds #:add-duration
-           #:subtract-seconds #:add #:subtract #:duration #:durationp #:make-duration
-           #:duration-plusp #:duration-minusp #:duration-zerop #:min-time #:max-time
-           #:midnight #:noon #:min-date #:max-date #:epoch-date #:min-timestamp
-           #:max-timestamp #:epoch-timestamp #:min-instant #:max-instant
-           #:epoch-instant #:zero-duration #:iso-week-year #:iso-week-number
-           #:iso-week-year-and-number #:day-of-year #:copy))
+           #:hash #:compare #:monday #:tuesday #:wednesday #:thursday #:friday
+           #:saturday #:sunday #:january #:february #:march #:april #:may #:june
+           #:july #:august #:september #:october #:november #:december #:leap-year-p
+           #:days-in-month #:min-year #:max-year #:min-epoch-second #:max-epoch-second
+           #:now #:*zone* #:current-instant #:current-date #:current-time #:current-timestamp
+           #:add-seconds #:add-duration #:subtract-seconds #:add #:subtract #:duration
+           #:durationp #:make-duration #:duration-plusp #:duration-minusp #:duration-zerop
+           #:min-time #:max-time #:midnight #:noon #:min-date #:max-date #:epoch-date
+           #:min-timestamp #:max-timestamp #:epoch-timestamp #:min-instant
+           #:max-instant #:epoch-instant #:zero-duration #:iso-week-year
+           #:iso-week-number #:iso-week-year-and-number #:day-of-year #:copy
+           #:earlierp #:laterp #:not-earlierp #:not-laterp #:shorterp #:longerp
+           #:not-shorterp #:not-longerp))
 
-(defpackage #:darts.lib.calendar-internals
+(defpackage #:deterministic-arts.calendar.internals
   (:use #:common-lisp #:alexandria)
-  (:local-nicknames (#:calendar #:darts.lib.calendar))
+  (:local-nicknames (#:calendar #:deterministic-arts.calendar))
   (:export #:resolve-zone #:compute-zone-offset))
 

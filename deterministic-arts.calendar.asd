@@ -21,12 +21,8 @@
   THE SOFTWARE.
 |#
 
-(in-package #:common-lisp-user)
-(defpackage #:darts.asdf (:use #:common-lisp #:asdf))
-(in-package #:darts.asdf)
-
-(defsystem :darts.lib.gregorian
-  :name "darts.lib.gregorian"
+(defsystem #:deterministic-arts.calendar
+  :name "deterministic-arts.calendar"
   :author "Dirk Esser"
   :version "0.1"
   :maintainer "Dirk Esser"

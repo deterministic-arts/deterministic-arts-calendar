@@ -21,12 +21,12 @@
   THE SOFTWARE.
 |#
 
-(defpackage #:darts.lib.calendar.local-time-support
+(defpackage #:deterministic-arts.calendar.local-time-support
   (:use #:common-lisp)
-  (:local-nicknames (#:lt #:local-time) (#:c #:darts.lib.calendar) (#:ci #:darts.lib.calendar-internals))
+  (:local-nicknames (#:lt #:local-time) (#:c #:deterministic-arts.calendar) (#:ci #:deterministic-arts.calendar.internals))
   (:export #:to-local-time))
 
-(in-package #:darts.lib.calendar.local-time-support)
+(in-package #:deterministic-arts.calendar.local-time-support)
 
 (defmethod c:instant ((object lt:timestamp) &key zone date time)
   (declare (ignore zone date time))
