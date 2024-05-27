@@ -40,7 +40,7 @@
            #:max-instant #:epoch-instant #:zero-duration #:iso-week-year
            #:iso-week-number #:iso-week-year-and-number #:day-of-year #:copy
            #:earlierp #:laterp #:not-earlierp #:not-laterp #:shorterp #:longerp
-           #:not-shorterp #:not-longerp))
+           #:not-shorterp #:not-longerp #:am #:pm #:day-period))
 
 (defpackage #:deterministic-arts.calendar.internals
   (:use #:common-lisp #:alexandria)

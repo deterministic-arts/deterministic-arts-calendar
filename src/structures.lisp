@@ -193,6 +193,10 @@
     ((> object1 object2) 1)
     (t 0)))
 
+(defun compare-fixnums (object1 object2)
+  (declare (type fixnum object1 object2))
+  (signum (- object1 object2)))
+
 (macrolet ((define-compare (name &rest fields)
              (labels
                  ((cmp-field (spec)
@@ -200,6 +204,7 @@
                         (if (atom spec)
                             (values spec 'compare-reals)
                             (values (first spec) (second spec)))
+                      (when (eq cmp ':fixnum) (setf cmp 'compare-fixnums))
                       `(,cmp (,getter object1) (,getter object2)))))
              `(defun ,name (object1 object2)
                 ,(let* ((chain (reverse fields))
@@ -208,12 +213,13 @@
                               (let ((temp (gensym)))
                                 `(let ((,temp ,(cmp-field spec)))
                                    (if (zerop ,temp) ,tail ,temp))))
-                            (cdr chain) :initial-value last))))))
-  (define-compare compare-dates date-year date-month date-day)
-  (define-compare compare-times time-hour time-minute time-second time-nanos)
-  (define-compare compare-instants instant-epoch-second instant-nanos)
-  (define-compare compare-durations duration-seconds duration-nanos)
-  (define-compare compare-timestamps (timestamp-date compare-dates) (timestamp-time compare-times)))
+                            (cdr chain) :initial-value (cmp-field last)))))))
+  (locally (declare (inline compare-fixnums compare-reals))
+    (define-compare compare-dates date-year (date-month :fixnum) (date-day :fixnum))
+    (define-compare compare-times (time-hour :fixnum) (time-minute :fixnum) (time-second :fixnum) time-nanos)
+    (define-compare compare-instants instant-epoch-second instant-nanos)
+    (define-compare compare-durations duration-seconds duration-nanos)
+    (define-compare compare-timestamps (timestamp-date compare-dates) (timestamp-time compare-times))))
 
 (macrolet ((define-equality (name &rest fields)
              `(defun ,name (object1 object2)

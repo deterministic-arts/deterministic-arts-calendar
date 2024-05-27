@@ -46,6 +46,9 @@
 (defconstant calendar:november 11)
 (defconstant calendar:december 12)
 
+(defconstant calendar:am 0)
+(defconstant calendar:pm 1)
+
 (defconstant calendar:min-year -999999999)
 (defconstant calendar:max-year 999999999)
 (defconstant calendar:min-epoch-second -31557015119088000)
@@ -140,6 +143,9 @@
 
 (defun calendar:iso-week-number (object)
   (nth-value 1 (calendar:iso-week-year-and-number object)))
+
+(defun calendar:day-period (object)
+  (if (< (calendar:hour object) 12) calendar:am calendar:pm))
 
 
 (defun check-month (value)
