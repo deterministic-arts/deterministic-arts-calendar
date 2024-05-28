@@ -75,10 +75,13 @@
 (defgeneric calendar:iso-week-year-and-number (object))
 (defgeneric calendar:day-of-year (object))
 
-(defgeneric calendar:instant (object &key zone date time))
-(defgeneric calendar:date (object &key zone date time))
-(defgeneric calendar:time (object &key zone date time))
-(defgeneric calendar:timestamp (object &key zone date time))
+(defgeneric calendar:to-instant (object zone &key))
+(defgeneric calendar:to-timestamp (object zone &key))
+
+(defgeneric calendar:instant (object))
+(defgeneric calendar:date (object))
+(defgeneric calendar:time (object))
+(defgeneric calendar:timestamp (object))
 
 (defgeneric calendar:compare (object1 object2))
 
@@ -92,8 +95,10 @@
 
 (defgeneric resolve-zone (name &optional arguments))
 
-(defgeneric compute-offset (epoch-second localp zone)
-  (:argument-precedence-order zone localp epoch-second))
+(defgeneric compute-zone-offset (moment zone)
+  (:argument-precedence-order zone moment))
+
+(defgeneric epoch-second-and-nanos (object))
 
 (deftype year ()
   `(integer ,calendar:min-year ,calendar:max-year))
@@ -112,10 +117,10 @@
   (mod (calendar:nanos object) 1000))
 
 (defun calendar:earlierp (object1 object2)
-  (< (calendar:compare object2 object1) 0))
+  (< (calendar:compare object1 object2) 0))
 
 (defun calendar:laterp (object1 object2)
-  (> (calendar:compare object2 object1) 0))
+  (> (calendar:compare object1 object2) 0))
 
 (defun calendar:not-earlierp (object1 object2)
   (>= (calendar:compare object1 object2) 0))
@@ -124,10 +129,10 @@
   (<= (calendar:compare object1 object2) 0))
 
 (defun calendar:shorterp (object1 object2)
-  (< (calendar:compare object2 object1) 0))
+  (< (calendar:compare object1 object2) 0))
 
 (defun calendar:longerp (object1 object2)
-  (> (calendar:compare object2 object1) 0))
+  (> (calendar:compare object1 object2) 0))
 
 (defun calendar:not-shorterp (object1 object2)
   (>= (calendar:compare object1 object2) 0))
@@ -146,6 +151,38 @@
 
 (defun calendar:day-period (object)
   (if (< (calendar:hour object) 12) calendar:am calendar:pm))
+
+
+
+(define-condition calendar:conversion-error (error)
+  ((timestamp :initarg :timestamp :reader calendar:conversion-error-timestamp)
+   (zone :initarg :zone :reader calendar:conversion-error-zone)
+   (period-start :initarg :period-start :reader calendar:conversion-error-period-start)
+   (period-end :initarg :period-end :reader calendar:conversion-error-period-end)
+   (candidates :initarg :candidates :initform nil :reader calendar:conversion-error-candidates)))
+
+(define-condition calendar:ambiguous-timestamp (calendar:conversion-error)
+  ()
+  (:report (lambda (object stream)
+             (format stream "the conversion of ~A to an instant using ~S is ambiguous due to an overlapping period between ~A and ~A during a zone offset transition~@[; ~
+                             potential candidates are ~{~A~^, ~}~]"
+                     (calendar:conversion-error-timestamp object)
+                     (calendar:conversion-error-zone object)
+                     (calendar:conversion-error-period-start object)
+                     (calendar:conversion-error-period-end object)
+                     (calendar:conversion-error-candidates object)))))
+
+(define-condition calendar:undefined-timestamp (calendar:conversion-error)
+  ((gap-start :initarg :gap-start :reader calendar:conversion-error-gap-start)
+   (gap-end :initarg :gap-end :reader calendar:conversion-error-gap-end))
+  (:report (lambda (object stream)
+             (format stream "the conversion of ~A to an instant using ~S is undefined due to a skipped period between ~A and ~A during a zone offset transition~@[; ~
+                             potential candidates are ~{~A~^, ~}~]"
+                     (calendar:conversion-error-timestamp object)
+                     (calendar:conversion-error-zone object)
+                     (calendar:conversion-error-period-start object)
+                     (calendar:conversion-error-period-end object)
+                     (calendar:conversion-error-candidates object)))))
 
 
 (defun check-month (value)

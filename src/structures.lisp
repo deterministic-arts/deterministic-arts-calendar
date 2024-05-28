@@ -323,174 +323,6 @@
 (defvar calendar:zero-duration (make-duration 0 0))
 
 
-(defun convert-utc-epoch-second-to-local (utc-epoch-second zone-or-offset)
-  (multiple-value-bind (zone offset)
-      (if (integerp zone-or-offset)
-          (values nil zone-or-offset)
-          (let ((zone (calendar:zone (or zone-or-offset calendar:*zone*))))
-            (values zone (compute-offset utc-epoch-second nil zone))))
-    (values (check-epoch-second (+ utc-epoch-second offset))
-            zone offset)))
-
-(defun convert-local-epoch-second-to-utc (local-epoch-second zone-or-offset)
-  (multiple-value-bind (zone offset)
-      (if (integerp zone-or-offset)
-          (values nil zone-or-offset)
-          (let ((zone (calendar:zone (or zone-or-offset calendar:*zone*))))
-            (values zone (compute-offset local-epoch-second t zone))))
-    (values (check-epoch-second (- local-epoch-second offset))
-            zone offset)))
-
-
-(defun calendar:now ()
-  (multiple-value-bind (second nanos) (current-epoch-second-and-nanos)
-    (make-instant second nanos)))
-
-(defun calendar:current-instant ()
-  (multiple-value-bind (second nanos) (current-epoch-second-and-nanos)
-    (make-instant second nanos)))
-
-(defun calendar:current-timestamp (&key zone)
-  (multiple-value-bind (second nanos) (current-epoch-second-and-nanos)
-    (multiple-value-bind (year month day hour minute second weekday) (decode-epoch-second (convert-utc-epoch-second-to-local second zone))
-      (make-timestamp (make-date year month day weekday) (make-time hour minute second nanos)))))
-
-(defun calendar:current-date (&key zone)
-  (multiple-value-bind (second) (current-epoch-second-and-nanos)
-    (multiple-value-bind (year month day hour minute second weekday) (decode-epoch-second (convert-utc-epoch-second-to-local second zone))
-      (declare (ignore hour minute second))
-      (make-date year month day weekday))))
-
-(defun calendar:current-time (&key zone)
-  (multiple-value-bind (second nanos) (current-epoch-second-and-nanos)
-    (multiple-value-bind (year month day hour minute second) (decode-epoch-second (convert-utc-epoch-second-to-local second zone))
-      (declare (ignore year month day))
-      (make-time hour minute second nanos))))
-
-
-(defun convert-to-instant (year month day hour minute second nanos zone)
-  (make-instant (convert-local-epoch-second-to-utc (encode-epoch-second year month day hour minute second) zone)
-                nanos))
-
-(defun convert-to-instant* (year month day hour minute second nanos zone)
-  (let* ((year (check-year year))
-         (month (check-minute month))
-         (day (check-day-of-month day year month))
-         (hour (check-hour hour))
-         (minute (check-minute minute))
-         (second (check-second second))
-         (nanos (check-nanos nanos)))
-  (make-instant (convert-local-epoch-second-to-utc (encode-epoch-second year month day hour minute second) zone)
-                nanos)))
-
-(defmethod calendar:instant ((object calendar:instant) &key zone date time)
-  (declare (ignore zone date time))
-  object)
-
-(defmethod calendar:instant ((object calendar:timestamp) &key zone date time)
-  (declare (ignore date time))
-  (convert-to-instant (timestamp-year object) (timestamp-month object) (timestamp-day object)
-                      (timestamp-hour object) (timestamp-minute object) (timestamp-second object)
-                      (timestamp-nanos object) zone))
-
-(defmethod calendar:instant ((object calendar:date) &key zone date time)
-  (declare (ignore date))
-  (let ((time (or time calendar:midnight)))
-    (if (or (calendar:timep time) (calendar:timestampp time))
-        (convert-to-instant (date-year object) (date-month object) (date-day object)
-                            (calendar:hour time) (calendar:minute time) (calendar:second time)
-                            (calendar:nanos time) zone)
-        (convert-to-instant* (date-year object) (date-month object) (date-day object)
-                             (calendar:hour time) (calendar:minute time) (calendar:second time)
-                             (calendar:nanos time) zone))))
-
-(defmethod calendar:instant ((object calendar:time) &key zone date time)
-  (declare (ignore time))
-  (let ((date (or date calendar:epoch-date)))
-    (if (or (calendar:datep date) (calendar:timestampp date))
-        (convert-to-instant (calendar:year date) (calendar:month date) (calendar:day date)
-                            (time-hour object) (time-minute object) (time-second object)
-                            (time-nanos object) zone)
-        (convert-to-instant* (calendar:year date) (calendar:month date) (calendar:day date)
-                             (time-hour object) (time-minute object) (time-second object)
-                             (time-nanos object) zone))))
-
-(defmethod calendar:timestamp ((object calendar:timestamp) &key zone date time)
-  (declare (ignore zone date time))
-  object)
-
-(defmethod calendar:timestamp ((object calendar:date) &key zone date time)
-  (declare (ignore zone date))
-  (let ((time (or time calendar:midnight)))
-    (when (calendar:timestampp time) (setf time (timestamp-time time)))
-    (if (calendar:timep time)
-        (make-timestamp object time)
-        (make-timestamp object
-                        (calendar:make-time (calendar:hour time) (calendar:minute time) (calendar:second time)
-                                            (calendar:nanos time))))))
-
-(defmethod calendar:timestamp ((object calendar:time) &key zone date time)
-  (declare (ignore zone time))
-  (let ((date (or date calendar:epoch-date)))
-    (when (calendar:timestampp date) (setf date (timestamp-date date)))
-    (if (calendar:datep date)
-        (make-timestamp date object)
-        (make-timestamp (calendar:make-date (calendar:year date) (calendar:month date) (calendar:day date))
-                        object))))
-
-(defmethod calendar:timestamp ((object calendar:instant) &key zone date time)
-  (declare (ignore date time))
-  (multiple-value-bind (year month day hour minute second weekday) (decode-epoch-second (convert-utc-epoch-second-to-local (instant-epoch-second object) zone))
-    (make-timestamp (make-date year month day weekday)
-                    (make-time hour minute second (instant-nanos object)))))
-
-(defmethod calendar:date ((object calendar:date) &key zone date time)
-  (declare (ignore zone date time))
-  object)
-
-(defmethod calendar:date ((object calendar:time) &key zone date time)
-  (declare (ignore zone time))
-  (let ((date (or date calendar:epoch-date)))
-    (typecase date
-      (calendar:date date)
-      (calendar:timestamp (timestamp-date date))
-      (t (calendar:make-date (calendar:year date) (calendar:month date) (calendar:day date))))))
-  
-(defmethod calendar:date ((object calendar:timestamp) &key zone date time)
-  (declare (ignore zone date time))
-  (timestamp-date object))
-
-(defmethod calendar:date ((object calendar:instant) &key zone date time)
-  (declare (ignore date time))
-  (multiple-value-bind (year month day hour minute second weekday) (decode-epoch-second (convert-utc-epoch-second-to-local (instant-epoch-second object) zone))
-    (declare (ignore hour minute second))
-    (make-date year month day weekday)))
-
-(defmethod calendar:time ((object calendar:time) &key zone date time)
-  (declare (ignore zone date time))
-  object)
-
-(defmethod calendar:time ((object calendar:date) &key zone date time)
-  (declare (ignore zone date))
-  (let ((time (or time calendar:midnight)))
-    (typecase time
-      (calendar:time time)
-      (calendar:timestamp (timestamp-time time))
-      (t (calendar:make-time (calendar:hour time) (calendar:minute time) (calendar:second time)
-                             (calendar:nanos time))))))
-
-(defmethod calendar:time ((object calendar:timestamp) &key zone date time)
-  (declare (ignore zone date time))
-  (timestamp-time object))
-
-(defmethod calendar:time ((object calendar:instant) &key zone date time)
-  (declare (ignore date time))
-  (multiple-value-bind (year month day hour minute second) (decode-epoch-second (convert-utc-epoch-second-to-local (instant-epoch-second object) zone))
-    (declare (ignore year month day))
-    (make-time hour minute second (instant-nanos object))))
-
-
-
 (defun print-date-fields (year month day stream)
   (format stream "~D-~2,'0D-~2,'0D" year month day))
 
@@ -663,19 +495,23 @@
   
 
 
-(defgeneric epoch-second-and-nanos (object)
-  (:method ((object calendar:instant))
-    (values (instant-epoch-second object) (instant-nanos object)))
-  (:method ((object calendar:timestamp))
-    (values (encode-epoch-second (timestamp-year object) (timestamp-month object) (timestamp-day object)
-                                 (timestamp-hour object) (timestamp-minute object) (timestamp-second object))
-            (timestamp-nanos object)))
-  (:method ((object calendar:date))
-    (values (encode-epoch-second (date-year object) (date-month object) (date-day object) 0 0 0)
-            0))
-  (:method ((object calendar:time))
-    (values (encode-epoch-second 2000 3 1 (time-hour object) (time-minute object) (time-second object))
-            (time-nanos object))))
+(defmethod epoch-second-and-nanos ((object calendar:instant))
+  (values (instant-epoch-second object) (instant-nanos object)))
+
+(defmethod epoch-second-and-nanos ((object calendar:timestamp))
+  (values (encode-epoch-second (timestamp-year object) (timestamp-month object) (timestamp-day object)
+                               (timestamp-hour object) (timestamp-minute object) (timestamp-second object))
+          (timestamp-nanos object)))
+
+(defmethod epoch-second-and-nanos ((object calendar:date))
+  (values (encode-epoch-second (date-year object) (date-month object) (date-day object) 0 0 0)
+          0))
+
+(defmethod epoch-second-and-nanos ((object calendar:time))
+  (values (encode-epoch-second 2000 3 1 (time-hour object) (time-minute object) (time-second object))
+          (time-nanos object)))
+
+
 
 (defmethod calendar:add-seconds ((object calendar:instant) (seconds integer) &optional (nanos 0))
   (if (and (zerop seconds) (zerop nanos)) object

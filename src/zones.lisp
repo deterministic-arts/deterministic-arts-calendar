@@ -46,10 +46,13 @@
     ((typep arguments '(cons integer null)) (make-instance 'fixed-offset-zone :offset (car arguments)))
     (t (error "invalid arguments ~S for zone designator ~S" arguments name))))
 
-(defmethod compute-offset (seconds localp (zone fixed-offset-zone))
-  (declare (ignore seconds localp))
+(defmethod calendar:zone ((object integer))
+  (make-instance 'fixed-offset-zone :offset object))
+
+(defmethod compute-zone-offset (moment (zone fixed-offset-zone))
+  (declare (ignore moment))
   (with-slots (offset) zone
-    offset))
+    (values offset (and (zerop offset) "UTC") nil)))
 
 (defmethod calendar:equal ((object1 fixed-offset-zone) (object2 fixed-offset-zone))
   (eql (slot-value object1 'offset)

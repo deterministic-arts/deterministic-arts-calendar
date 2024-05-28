@@ -40,10 +40,14 @@
            #:max-instant #:epoch-instant #:zero-duration #:iso-week-year
            #:iso-week-number #:iso-week-year-and-number #:day-of-year #:copy
            #:earlierp #:laterp #:not-earlierp #:not-laterp #:shorterp #:longerp
-           #:not-shorterp #:not-longerp #:am #:pm #:day-period))
+           #:not-shorterp #:not-longerp #:am #:pm #:day-period #:to-instant
+           #:to-timestamp #:ambiguous-timestamp #:undefined-timestamp #:conversion-error
+           #:conversion-error-timestamp #:conversion-error-zone
+           #:conversion-error-candidates #:conversion-error-period-start
+           #:conversion-error-period-end #:return-instant #:use-offset))
 
 (defpackage #:deterministic-arts.calendar.internals
   (:use #:common-lisp #:alexandria)
   (:local-nicknames (#:calendar #:deterministic-arts.calendar))
-  (:export #:resolve-zone #:compute-zone-offset))
+  (:export #:resolve-zone #:compute-zone-offset #:epoch-second-and-nanos))
 

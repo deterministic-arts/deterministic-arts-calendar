@@ -37,4 +37,5 @@
     ((:file "packages")
      (:file "definitions")
      (:file "structures")
+     (:file "conversions")
      (:file "zones")))))
