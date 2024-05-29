@@ -86,17 +86,26 @@
 (defun timestamp-nanos (object)
   (time-nanos (timestamp-time object)))
 
-(defun calendar:duration-plusp (object)
+(defun duration-plusp (object)
   (or (plusp (duration-seconds object))
       (and (zerop (duration-seconds object))
            (plusp (duration-nanos object)))))
 
-(defun calendar:duration-minusp (object)
+(defun duration-minusp (object)
   (minusp (duration-seconds object)))
 
-(defun calendar:duration-zerop (object)
+(defun duration-zerop (object)
   (and (zerop (duration-seconds object))
        (zerop (duration-nanos object))))
+
+(defmethod calendar:plusp ((object calendar:duration))
+  (duration-plusp object))
+
+(defmethod calendar:minusp ((object calendar:duration))
+  (duration-minusp object))
+
+(defmethod calendar:zerop ((object calendar:duration))
+  (duration-zerop object))
 
 (defun calendar:make-date (year month day)
   (let ((year (check-year year))
@@ -321,6 +330,7 @@
 (defvar calendar:max-instant (make-instant calendar:max-epoch-second 999999999))
 (defvar calendar:epoch-instant (make-instant 0 0))
 (defvar calendar:zero-duration (make-duration 0 0))
+(defvar calendar:epsilon-duration (make-duration 0 1))
 
 
 (defun print-date-fields (year month day stream)
@@ -498,19 +508,19 @@
   
 
 
-(defmethod epoch-second-and-nanos ((object calendar:instant))
+(defmethod utc-epoch-second-and-nanos ((object calendar:instant))
   (values (instant-epoch-second object) (instant-nanos object)))
 
-(defmethod epoch-second-and-nanos ((object calendar:timestamp))
+(defmethod utc-epoch-second-and-nanos ((object calendar:timestamp))
   (values (encode-epoch-second (timestamp-year object) (timestamp-month object) (timestamp-day object)
                                (timestamp-hour object) (timestamp-minute object) (timestamp-second object))
           (timestamp-nanos object)))
 
-(defmethod epoch-second-and-nanos ((object calendar:date))
+(defmethod utc-epoch-second-and-nanos ((object calendar:date))
   (values (encode-epoch-second (date-year object) (date-month object) (date-day object) 0 0 0)
           0))
 
-(defmethod epoch-second-and-nanos ((object calendar:time))
+(defmethod utc-epoch-second-and-nanos ((object calendar:time))
   (values (encode-epoch-second 2000 3 1 (time-hour object) (time-minute object) (time-second object))
           (time-nanos object)))
 
@@ -524,7 +534,7 @@
 
 (defmethod calendar:add-seconds ((object calendar:timestamp) (seconds integer) &optional (nanos 0))
   (if (and (zerop seconds) (zerop nanos)) object
-      (multiple-value-bind (second* nanos*) (epoch-second-and-nanos object)
+      (multiple-value-bind (second* nanos*) (utc-epoch-second-and-nanos object)
         (multiple-value-bind (second** nanos**) (add-raw-seconds second* nanos* seconds nanos)
           (multiple-value-bind (year month day hour minute second weekday) (decode-epoch-second second**)
             (make-timestamp (make-date year month day weekday)
@@ -573,15 +583,15 @@
 
 (defmethod seconds-and-nanos-between ((start calendar:timestamp) (end calendar:timestamp))
   (multiple-value-call #'seconds-and-nanos-between-epoch-seconds
-    (epoch-second-and-nanos start)
-    (epoch-second-and-nanos end)))
+    (utc-epoch-second-and-nanos start)
+    (utc-epoch-second-and-nanos end)))
 
 (defmethod seconds-and-nanos-between ((start calendar:time) (end calendar:time))
   (multiple-value-call #'seconds-and-nanos-between-epoch-seconds
-    (epoch-second-and-nanos start)
-    (epoch-second-and-nanos end)))
+    (utc-epoch-second-and-nanos start)
+    (utc-epoch-second-and-nanos end)))
 
 (defmethod seconds-and-nanos-between ((start calendar:date) (end calendar:date))
   (multiple-value-call #'seconds-and-nanos-between-epoch-seconds
-    (epoch-second-and-nanos start)
-    (epoch-second-and-nanos end)))
+    (utc-epoch-second-and-nanos start)
+    (utc-epoch-second-and-nanos end)))

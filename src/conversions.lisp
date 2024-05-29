@@ -87,7 +87,7 @@
                 :test conversion-error-p
                 :interactive read-new-value
                 (etypecase value ((integer #.(* -1 26 60 60) #.(* 26 60 60)) value)))))))
-    (multiple-value-bind (second nanos) (epoch-second-and-nanos object)
+    (multiple-value-bind (second nanos) (utc-epoch-second-and-nanos object)
       (make-instant (check-epoch-second (- second offset)) nanos))))
 
 

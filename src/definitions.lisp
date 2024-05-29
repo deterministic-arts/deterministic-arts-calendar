@@ -91,6 +91,10 @@
 (defgeneric calendar:hash (object)
   (:method (object) (sxhash object)))
 
+(defgeneric calendar:plusp (object))
+(defgeneric calendar:zerop (object))
+(defgeneric calendar:minusp (object))
+
 (defgeneric calendar:add-seconds (object seconds &optional nanos))
 
 (defgeneric resolve-zone (name &optional arguments))

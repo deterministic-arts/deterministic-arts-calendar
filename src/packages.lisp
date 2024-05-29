@@ -34,21 +34,37 @@
            #:days-in-month #:min-year #:max-year #:min-epoch-second #:max-epoch-second
            #:now #:*zone* #:current-instant #:current-date #:current-time #:current-timestamp
            #:add-seconds #:add-duration #:subtract-seconds #:add #:subtract #:duration
-           #:durationp #:make-duration #:duration-plusp #:duration-minusp #:duration-zerop
-           #:min-time #:max-time #:midnight #:noon #:min-date #:max-date #:epoch-date
-           #:min-timestamp #:max-timestamp #:epoch-timestamp #:min-instant
-           #:max-instant #:epoch-instant #:zero-duration #:iso-week-year
-           #:iso-week-number #:iso-week-year-and-number #:day-of-year #:copy
-           #:earlierp #:laterp #:not-earlierp #:not-laterp #:shorterp #:longerp
-           #:not-shorterp #:not-longerp #:am #:pm #:day-period #:to-instant
-           #:to-timestamp #:ambiguous-timestamp #:undefined-timestamp #:conversion-error
-           #:conversion-error-timestamp #:conversion-error-zone
+           #:durationp #:make-duration #:epsilon-duration #:min-time #:max-time
+           #:midnight #:noon #:min-date #:max-date #:epoch-date #:min-timestamp
+           #:max-timestamp #:epoch-timestamp #:min-instant #:max-instant #:epoch-instant
+           #:zero-duration #:iso-week-year #:iso-week-number #:iso-week-year-and-number
+           #:day-of-year #:copy #:earlierp #:laterp #:not-earlierp #:not-laterp
+           #:shorterp #:longerp #:not-shorterp #:not-longerp #:am #:pm #:day-period
+           #:to-instant #:to-timestamp #:ambiguous-timestamp #:undefined-timestamp
+           #:conversion-error #:conversion-error-timestamp #:conversion-error-zone
            #:conversion-error-candidates #:conversion-error-period-start
-           #:conversion-error-period-end #:return-instant #:use-offset))
+           #:conversion-error-period-end #:return-instant #:use-offset #:plusp
+           #:minusp #:zerop)
+  (:documentation "The consumer-level API of this library."))
 
 (defpackage #:deterministic-arts.calendar.internals
   (:use #:common-lisp #:alexandria #:bordeaux-threads)
   (:import-from #:trivial-garbage #:make-weak-hash-table)
   (:local-nicknames (#:calendar #:deterministic-arts.calendar))
-  (:export #:resolve-zone #:compute-zone-offset #:epoch-second-and-nanos))
+  (:export #:date-year #:date-month #:date-day #:date-weekday #:time-hour
+           #:time-minute #:time-second #:time-nanos #:instant-epoch-second
+           #:instant-nanos #:duration-seconds #:duration-nanos #:timestamp-year
+           #:timestamp-month #:timestamp-day #:timestamp-hour #:timestamp-minute
+           #:timestamp-second #:timestamp-nanos #:timestamp-weekday #:compare-dates
+           #:compare-times #:compare-timestamps #:compare-instants #:compare-durations
+           #:date-hash #:time-hash #:timestamp-hash #:instant-hash #:duration-hash
+           #:date= #:date/= #:date< #:date<= #:date>= #:date> #:time= #:time/=
+           #:time< #:time<= #:time>= #:time> #:timestamp= #:timestamp/=
+           #:timestamp< #:timestamp<= #:timestamp>= #:timestamp> #:duration=
+           #:duration/= #:duration< #:duration<= #:duration>= #:duration>
+           #:duration-minusp #:duration-zerop #:duration-plusp
+           #:resolve-zone #:compute-zone-offset #:utc-epoch-second-and-nanos)
+  (:documentation "The service-provider-level API of this library. May also be
+occasionally useful for plain consumers, but mostly intended to be used by code
+implementing new time zones, etc."))
 
