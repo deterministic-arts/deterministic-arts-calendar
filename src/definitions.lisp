@@ -71,7 +71,7 @@
 (defgeneric calendar:minute (object))
 (defgeneric calendar:second (object))
 (defgeneric calendar:nanos (object))
-(defgeneric calendar:epoch-second (object))
+(defgeneric calendar:epoch-second (object &optional zone))
 (defgeneric calendar:iso-week-year-and-number (object))
 (defgeneric calendar:day-of-year (object))
 

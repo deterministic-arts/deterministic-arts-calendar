@@ -424,7 +424,10 @@
 (defmethod calendar:nanos ((object calendar:instant)) (instant-nanos object))
 (defmethod calendar:nanos ((object calendar:duration)) (duration-nanos object))
 
-(defmethod calendar:epoch-second ((object calendar:instant)) (instant-epoch-second object))
+(defmethod calendar:epoch-second ((object calendar:instant) &optional zone)
+  (declare (ignore zone))
+  (instant-epoch-second object))
+
 (defmethod calendar:seconds ((object calendar:instant)) (instant-epoch-second object))
 (defmethod calendar:seconds ((object calendar:duration)) (duration-seconds object))
 
@@ -561,7 +564,7 @@
     (cond
       ((and (plusp seconds) (minusp nanos)) (values (1- seconds) (+ nanos 1000000000)))
       (t (values seconds nanos)))))
-  
+
 (defgeneric seconds-and-nanos-between (start end))
 
 (defmethod seconds-and-nanos-between ((start calendar:instant) (end calendar:instant))

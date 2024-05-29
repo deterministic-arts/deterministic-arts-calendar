@@ -23,6 +23,22 @@
 
 (in-package #:deterministic-arts.calendar.internals)
 
+(defmethod calendar:epoch-second ((object calendar:date) &optional (zone 't))
+  (let ((offset (if (or (not zone) (eq zone *utc-zone*)) 0 (compute-zone-offset object zone)))
+        (second (encode-epoch-second (date-year object) (date-month object) (date-day object) 0 0 0)))
+    (- second offset)))
+
+(defmethod calendar:epoch-second ((object calendar:time) &optional (zone 't))
+  (let ((offset (if (or (not zone) (eq zone *utc-zone*)) 0 (compute-zone-offset object zone)))
+        (second (encode-epoch-second 2000 3 1 (time-hour object) (time-minute object) (time-second object))))
+    (- second offset)))
+
+(defmethod calendar:epoch-second ((object calendar:timestamp) &optional (zone 't))
+  (let ((offset (if (or (not zone) (eq zone *utc-zone*)) 0 (compute-zone-offset object zone)))
+        (second (encode-epoch-second (timstamp-year object) (timestamp-month object) (timestamp-day object)
+                                     (timestamp-hour object) (timestamp-minute object) (timestamp-second object))))
+    (- second offset)))
+
 (defmethod calendar:to-timestamp (object zone &rest options &key &allow-other-keys)
   (apply #'calendar:to-timestamp object (calendar:zone zone) options))
 
