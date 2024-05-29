@@ -29,7 +29,7 @@
   :licence "MIT"
   :description "Date/time representation and handling"
   :long-description ""
-  :depends-on (#:alexandria)
+  :depends-on (#:alexandria #:bordeaux-threads #:trivial-garbage)
   :serial t
   :components
   ((:module :src
@@ -37,5 +37,5 @@
     ((:file "packages")
      (:file "definitions")
      (:file "structures")
-     (:file "conversions")
-     (:file "zones")))))
+     (:file "zones")
+     (:file "conversions")))))

@@ -173,8 +173,7 @@
                      (calendar:conversion-error-candidates object)))))
 
 (define-condition calendar:undefined-timestamp (calendar:conversion-error)
-  ((gap-start :initarg :gap-start :reader calendar:conversion-error-gap-start)
-   (gap-end :initarg :gap-end :reader calendar:conversion-error-gap-end))
+  ()
   (:report (lambda (object stream)
              (format stream "the conversion of ~A to an instant using ~S is undefined due to a skipped period between ~A and ~A during a zone offset transition~@[; ~
                              potential candidates are ~{~A~^, ~}~]"

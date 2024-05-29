@@ -29,7 +29,18 @@
   ((offset :type integer :initarg :offset)))
 
 (defconstant fixed-zone-base-hash (sxhash 'fixed-offset-zone))
-(defvar *utc-zone* (make-instance 'fixed-offset-zone :offset 0))
+
+(defvar *fixed-offset-zone-cache-lock* (make-lock "Fixed-Offset Zone Table"))
+(defvar *fixed-offset-zones* (make-weak-hash-table :test #'eql))
+
+(defun make-fixed-offset-zone (offset)
+  (let ((offset (etypecase offset ((integer #.(* -1 60 60 25) #.(* 60 60 25)) offset))))
+    (with-lock-held (*fixed-offset-zone-cache-lock*)
+      (or (gethash offset *fixed-offset-zones*)
+          (setf (gethash offset *fixed-offset-zones*)
+                (make-instance 'fixed-offset-zone :offset offset))))))
+
+(defvar *utc-zone* (make-fixed-offset-zone 0))
 (unless (boundp 'calendar:*zone*) (setf calendar:*zone* *utc-zone*))
 
 (defmethod calendar:expression ((object fixed-offset-zone))
@@ -43,23 +54,20 @@
 (defmethod resolve-zone ((name (eql :fixed)) &optional arguments)
   (cond
     ((null arguments) *utc-zone*)
-    ((typep arguments '(cons integer null)) (make-instance 'fixed-offset-zone :offset (car arguments)))
+    ((typep arguments '(cons integer null)) (make-fixed-offset-zone (car arguments)))
     (t (error "invalid arguments ~S for zone designator ~S" arguments name))))
 
 (defmethod calendar:zone ((object integer))
-  (make-instance 'fixed-offset-zone :offset object))
+  (make-fixed-offset-zone object))
 
 (defmethod compute-zone-offset (moment (zone fixed-offset-zone))
   (declare (ignore moment))
-  (with-slots (offset) zone
-    (values offset (and (zerop offset) "UTC") nil)))
+  (with-slots (offset) zone (values offset (and (zerop offset) "UTC") nil)))
 
 (defmethod calendar:equal ((object1 fixed-offset-zone) (object2 fixed-offset-zone))
-  (eql (slot-value object1 'offset)
-       (slot-value object2 'offset)))
+  (eql (slot-value object1 'offset) (slot-value object2 'offset)))
 
 (defmethod calendar:hash ((object fixed-offset-zone))
-  (logand most-positive-fixnum
-          (+ (* 31 fixed-zone-base-hash) (slot-value object 'offset))))
+  (logand most-positive-fixnum (+ (* 31 fixed-zone-base-hash) (slot-value object 'offset))))
 
 

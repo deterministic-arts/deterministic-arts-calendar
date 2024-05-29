@@ -29,6 +29,9 @@
 (defmethod calendar:to-timestamp (object (zone (eql t)) &rest options &key &allow-other-keys)
   (apply #'calendar:to-timestamp object (calendar:zone calendar:*zone*) options))
 
+(defmethod calendar:to-timestamp (object (zone null) &rest options &key &allow-other-keys)
+  (apply #'calendar:to-timestamp object *utc-zone* options))
+
 (defmethod calendar:to-timestamp ((object calendar:instant) (zone calendar:zone) &key)
   (let ((offset (compute-zone-offset object zone)))
     (multiple-value-bind (year month day hour minute second weekday) (decode-epoch-second (check-epoch-second (+ (instant-epoch-second object) offset)))
@@ -40,6 +43,9 @@
 
 (defmethod calendar:to-instant (object (zone (eql t)) &rest options &key &allow-other-keys)
   (apply #'calendar:to-instant object (calendar:zone calendar:*zone*) options))
+
+(defmethod calendar:to-instant (object (zone null) &rest options &key &allow-other-keys)
+  (apply #'calendar:to-instant object *utc-zone* options))
 
 (defmethod calendar:to-instant (object (zone calendar:zone) &rest options &key &allow-other-keys)
   (apply #'calendar:to-instant (calendar:timestamp object) zone options))

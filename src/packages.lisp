@@ -47,7 +47,8 @@
            #:conversion-error-period-end #:return-instant #:use-offset))
 
 (defpackage #:deterministic-arts.calendar.internals
-  (:use #:common-lisp #:alexandria)
+  (:use #:common-lisp #:alexandria #:bordeaux-threads)
+  (:import-from #:trivial-garbage #:make-weak-hash-table)
   (:local-nicknames (#:calendar #:deterministic-arts.calendar))
   (:export #:resolve-zone #:compute-zone-offset #:epoch-second-and-nanos))
 
