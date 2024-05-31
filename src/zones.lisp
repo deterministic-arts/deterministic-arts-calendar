@@ -25,7 +25,7 @@
 
 
 (defclass fixed-offset-zone (calendar:zone)
-  ((offset :type integer :initarg :offset)))
+  ((offset :type offset-number :initarg :offset :reader offset-number)))
 
 (defconstant fixed-zone-base-hash (sxhash 'fixed-offset-zone))
 
@@ -54,12 +54,12 @@
     (if (zerop offset) '(:utc) `(:fixed ,offset))))
 
 (defmethod resolve-zone ((name (eql :utc)) &optional arguments)
-  (if (null arguments) *utc-zone*
+  (if (null arguments) +utc-zone+
       (error "zone designator ~S does not accept arguments" name)))
 
 (defmethod resolve-zone ((name (eql :fixed)) &optional arguments)
   (cond
-    ((null arguments) *utc-zone*)
+    ((null arguments) +utc-zone+)
     ((typep arguments '(cons integer null)) (make-fixed-offset-zone (car arguments)))
     (t (error "invalid arguments ~S for zone designator ~S" arguments name))))
 
@@ -76,3 +76,54 @@
 (defmethod calendar:hash ((object fixed-offset-zone))
   (logand most-positive-fixnum (+ (* 31 fixed-zone-base-hash) (slot-value object 'offset))))
 
+
+
+(defgeneric make-transition (moment offset-before offset-after))
+
+(defstruct (transition (:copier nil) (:conc-name transition-) (:predicate transitionp)
+                       (:constructor make-transition-1 (epoch-second timestamp offset-before offset-after)))
+  (epoch-second (error "missing") :type calendar:epoch-second :read-only t)
+  (timestamp (error "missing") :type calendar:timestamp :read-only t)
+  (offset-before (error "missing") :type offset-number :read-only t)
+  (offset-after (error "missing") :type offset-number :read-only t))
+
+(defun transition-instant (object)
+  (make-instant (transition-epoch-second object)))
+
+(defun transition-duration-seconds (object)
+  (- (transition-offset-after object) (transition-offset-before object)))
+
+(defun transition-timestamp-before (object)
+  (transition-timestamp object))
+
+(defun transition-timestamp-after (object)
+  (calendar:add-seconds (transition-timestamp object) (transition-duration-seconds object)))
+
+(defun gap-transition-p (object)
+  (< (transition-offset-before object) (transition-offset-after object)))
+
+(defun overlap-transition-p (object)
+  (> (transition-offset-before object) (transition-offset-after object)))
+
+(defun list-valid-transition-offsets (object)
+  (if (gap-transition-p object) nil
+      (list (transition-offset-before object) (transition-offset-after object))))
+
+(defun valid-transition-offset-p (offset object)
+  (and (not (gap-transition-p object))
+       (or (eql offset (transition-offset-before object))
+           (eql offset (transition-offset-after object)))))
+
+(defmethod make-transition ((moment calendar:instant) offset-before offset-after)
+  (if (not (zerop (instant-nanos moment)))
+      (error "invalid transition time ~S (nanos should be zero)" moment)
+      (let ((epoch-second (calendar:epoch-second moment)))
+        (multiple-value-bind (year month day hour minute second weekday) (decode-epoch-second (- epoch-second offset-before))
+          (let ((timestamp (make-timestamp (make-date year month day weekday) (make-time hour minute second 0))))
+            (make-transition-1 epoch-second timestamp offset-before offset-after))))))
+
+(defmethod make-transition ((moment calendar:timestamp) offset-before offset-after)
+  (if (not (zerop (timestamp-nanos moment)))
+      (error "invalid transition time ~S (nanos should be zero)" moment)
+      (let ((epoch-second (+ offset-before (calendar:epoch-second moment nil))))
+        (make-transition-1 epoch-second moment offset-before offset-after))))

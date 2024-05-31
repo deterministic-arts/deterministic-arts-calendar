@@ -72,10 +72,9 @@
               ((conversion-error-p (condition)
                  (typep condition 'calendar:conversion-error))
                (read-new-value ()
-                 (lambda ()
-                   (format *query-io* "~&Enter expression: ")
-                   (force-output *query-io*)
-                   (list (eval (read *query-io*))))))
+                 (format *query-io* "~&Enter expression: ")
+                 (force-output *query-io*)
+                 (list (eval (read *query-io*)))))
             (restart-case (compute-zone-offset object zone)
               (calendar:return-instant (value)
                 :report (lambda (stream) (format stream "enter a ~S value to return from ~S" 'calendar:instant 'calendar:to-instant))
@@ -83,10 +82,10 @@
                 :interactive read-new-value
                 (return-from calendar:to-instant (calendar:instant value)))
               (calendar:use-offset (value)
-                :report "enter a zone offset finish the computation"
+                :report "enter a zone offset to finish the computation with"
                 :test conversion-error-p
                 :interactive read-new-value
-                (etypecase value ((integer #.(* -1 26 60 60) #.(* 26 60 60)) value)))))))
+                (offset-number value))))))
     (multiple-value-bind (second nanos) (utc-epoch-second-and-nanos object)
       (make-instant (check-epoch-second (- second offset)) nanos))))
 

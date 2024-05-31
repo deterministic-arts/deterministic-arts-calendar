@@ -158,36 +158,90 @@
 
 
 
+(deftype offset-number ()
+  '(integer #.(* -24 60 60) #.(* 25 60 60)))
+
+(defun format-offset-number (value)
+  (multiple-value-bind (sign value) (if (minusp value) (values #\- (abs value)) (values #\+ value))
+    (multiple-value-bind (rest seconds) (floor value 60)
+      (multiple-value-bind (hours minutes) (floor rest 60)
+        (format nil "~A~2,'0D~@[:~2,'0D~@[:~2,'0D~]~]"
+                sign hours
+                (and (or (plusp minutes) (plusp seconds)) minutes)
+                (and (plusp seconds) seconds))))))
+
+(defun parse-offset-number (string &optional (start 0) end)
+  (let* ((string (string string))
+         (end (or end (length string))))
+    (labels
+        ((parse-sign (position)
+           (when (< position end)
+             (case (char string position)
+               ((#\-) (parse-hours (1+ position) -1))
+               ((#\+) (parse-hours (1+ position) 1))
+               (otherwise (parse-hours position 1)))))
+         (parse-number (position &optional (value 0))
+           (if (>= position end)
+               (values position value)
+               (let ((digit (digit-char-p (char string position) 10)))
+                 (if digit
+                     (parse-number (1+ position) (+ (* 10 value) digit))
+                     (values position value)))))
+         (parse-hours (position sign)
+           (multiple-value-bind (new-position hours) (parse-number position)
+             (cond
+               ((not (and (typep hours '(integer 0 25)) (> new-position position))) nil)
+               ((>= new-position end) (* sign hours 60 60))
+               ((not (eql #\: (char string new-position))) nil)
+               (t (parse-minutes (1+ new-position) sign (* hours 60 60))))))
+         (parse-minutes (position sign partial)
+           (multiple-value-bind (new-position minutes) (parse-number position)
+             (cond
+               ((not (and (typep minutes '(integer 0 59)) (> new-position position))) nil)
+               ((>= new-position end) (* sign (+ partial (* minutes 60))))
+               ((not (eql #\: (char string new-position))) nil)
+               (t (parse-seconds (1+ new-position) sign (+ partial (* minutes 60)))))))
+         (parse-seconds (position sign partial)
+           (multiple-value-bind (new-position seconds) (parse-number position)
+             (cond
+               ((not (typep seconds '(integer 0 59))) nil)
+               ((< new-position end) nil)
+               (t (* sign (+ partial seconds)))))))
+      (parse-sign start))))
+
+(defgeneric offset-number (object)
+  (:method ((object integer)) (if (typep object 'offset-number) object (call-next-method)))
+  (:method ((object string)) (or (parse-offset-number object) (call-next-method)))
+  (:method ((object t)) (error 'type-error :datum object :expected-type 'offset-number)))
+
+
 (define-condition calendar:conversion-error (error)
   ((timestamp :initarg :timestamp :reader calendar:conversion-error-timestamp)
    (zone :initarg :zone :reader calendar:conversion-error-zone)
    (period-start :initarg :period-start :reader calendar:conversion-error-period-start)
-   (period-end :initarg :period-end :reader calendar:conversion-error-period-end)
-   (candidates :initarg :candidates :initform nil :reader calendar:conversion-error-candidates)))
+   (period-end :initarg :period-end :reader calendar:conversion-error-period-end)))
 
 (define-condition calendar:ambiguous-timestamp (calendar:conversion-error)
-  ()
+  ((candidates :initarg :candidates :initform nil :reader calendar:conversion-error-candidates))
   (:report (lambda (object stream)
-             (format stream "the conversion of ~A to an instant using ~S is ambiguous due to an overlapping ~
-                             period between ~A and ~A during a zone offset transition~@[; ~
-                             potential candidates are ~{~A~^, ~}~]"
+             (format stream "the conversion of ~A to an instant using ~S is ambiguous due to an overlapping ~@
+                             period between ~A and ~A during a zone offset transition~@[; applicable offsets ~@
+                             are ~{~A~^, ~}~]"
                      (calendar:conversion-error-timestamp object)
                      (calendar:conversion-error-zone object)
                      (calendar:conversion-error-period-start object)
                      (calendar:conversion-error-period-end object)
-                     (calendar:conversion-error-candidates object)))))
+                     (mapcar #'format-offset-number (calendar:conversion-error-candidates object))))))
 
 (define-condition calendar:undefined-timestamp (calendar:conversion-error)
   ()
   (:report (lambda (object stream)
-             (format stream "the conversion of ~A to an instant using ~S is undefined due to a skipped ~
-                             period between ~A and ~A during a zone offset transition~@[; ~
-                             potential candidates are ~{~A~^, ~}~]"
+             (format stream "the conversion of ~A to an instant using ~S is undefined due to a skipped ~@
+                             period between ~A and ~A during a zone offset transition"
                      (calendar:conversion-error-timestamp object)
                      (calendar:conversion-error-zone object)
                      (calendar:conversion-error-period-start object)
-                     (calendar:conversion-error-period-end object)
-                     (calendar:conversion-error-candidates object)))))
+                     (calendar:conversion-error-period-end object)))))
 
 
 (defun check-month (value)
