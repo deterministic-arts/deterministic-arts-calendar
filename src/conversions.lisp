@@ -24,17 +24,17 @@
 (in-package #:deterministic-arts.calendar.internals)
 
 (defmethod calendar:epoch-second ((object calendar:date) &optional (zone 't))
-  (let ((offset (if (or (not zone) (eq zone *utc-zone*)) 0 (compute-zone-offset object zone)))
+  (let ((offset (if (or (not zone) (eq zone +utc-zone+)) 0 (compute-zone-offset object zone)))
         (second (encode-epoch-second (date-year object) (date-month object) (date-day object) 0 0 0)))
     (- second offset)))
 
 (defmethod calendar:epoch-second ((object calendar:time) &optional (zone 't))
-  (let ((offset (if (or (not zone) (eq zone *utc-zone*)) 0 (compute-zone-offset object zone)))
+  (let ((offset (if (or (not zone) (eq zone +utc-zone+)) 0 (compute-zone-offset object zone)))
         (second (encode-epoch-second 2000 3 1 (time-hour object) (time-minute object) (time-second object))))
     (- second offset)))
 
 (defmethod calendar:epoch-second ((object calendar:timestamp) &optional (zone 't))
-  (let ((offset (if (or (not zone) (eq zone *utc-zone*)) 0 (compute-zone-offset object zone)))
+  (let ((offset (if (or (not zone) (eq zone +utc-zone+)) 0 (compute-zone-offset object zone)))
         (second (encode-epoch-second (timstamp-year object) (timestamp-month object) (timestamp-day object)
                                      (timestamp-hour object) (timestamp-minute object) (timestamp-second object))))
     (- second offset)))
@@ -46,7 +46,7 @@
   (apply #'calendar:to-timestamp object (calendar:zone calendar:*zone*) options))
 
 (defmethod calendar:to-timestamp (object (zone null) &rest options &key &allow-other-keys)
-  (apply #'calendar:to-timestamp object *utc-zone* options))
+  (apply #'calendar:to-timestamp object +utc-zone+ options))
 
 (defmethod calendar:to-timestamp ((object calendar:instant) (zone calendar:zone) &key)
   (let ((offset (compute-zone-offset object zone)))
@@ -61,7 +61,7 @@
   (apply #'calendar:to-instant object (calendar:zone calendar:*zone*) options))
 
 (defmethod calendar:to-instant (object (zone null) &rest options &key &allow-other-keys)
-  (apply #'calendar:to-instant object *utc-zone* options))
+  (apply #'calendar:to-instant object +utc-zone+ options))
 
 (defmethod calendar:to-instant (object (zone calendar:zone) &rest options &key &allow-other-keys)
   (apply #'calendar:to-instant (calendar:timestamp object) zone options))

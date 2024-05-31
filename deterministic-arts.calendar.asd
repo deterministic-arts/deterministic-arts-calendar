@@ -30,12 +30,19 @@
   :description "Date/time representation and handling"
   :long-description ""
   :depends-on (#:alexandria #:bordeaux-threads #:trivial-garbage)
-  :serial t
   :components
-  ((:module :src
-    :components
-    ((:file "packages")
-     (:file "definitions")
-     (:file "structures")
-     (:file "zones")
-     (:file "conversions")))))
+  ((:module "early"
+    :pathname "src"
+    :serial t
+    :components ((:file "packages")
+                 (:file "definitions")
+                 (:file "structures")
+                 (:file "zones")
+                 (:file "conversions")))
+   (:module "late"
+    :pathname "src"
+    :depends-on ("early")
+    :in-order-to ((compile-op (load-op "early"))
+                  (load-op (load-op "early")))
+    :serial t
+    :components ((:file "constants")))))

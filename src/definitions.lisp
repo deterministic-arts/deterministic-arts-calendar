@@ -97,9 +97,6 @@
 
 (defgeneric calendar:add-seconds (object seconds &optional nanos))
 
-(defgeneric calendar:offset-before (object))
-(defgeneric calendar:offset-after (object))
-
 (defgeneric resolve-zone (name &optional arguments))
 
 (defgeneric compute-zone-offset (moment zone)

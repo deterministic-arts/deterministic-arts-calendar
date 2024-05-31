@@ -175,27 +175,6 @@
                               (or nanos (duration-nanos object)))))
 
 
-(defmethod make-load-form ((object calendar:date) &optional environment)
-  (declare (ignore environment))
-  `(make-date ,(date-year object) ,(date-month object) ,(date-day object) ,(date-%weekday object)))
-
-(defmethod make-load-form ((object calendar:time) &optional environment)
-  (declare (ignore environment))
-  `(make-time ,(time-hour object) ,(time-minute object) ,(time-second object) ,(time-nanos object)))
-
-(defmethod make-load-form ((object calendar:timestamp) &optional environment)
-  (declare (ignore environment))
-  `(make-timestamp ,(timestamp-date object) ,(timestamp-time object)))
-
-(defmethod make-load-form ((object calendar:instant) &optional environment)
-  (declare (ignore environment))
-  `(make-instant ,(instant-epoch-second object) ,(instant-nanos object)))
-
-(defmethod make-load-form ((object calendar:duration) &optional environment)
-  (declare (ignore environment))
-  `(make-duration ,(duration-seconds object) ,(duration-nanos object)))
-
-
 (defun compare-reals (object1 object2)
   (cond
     ((< object1 object2) -1)
@@ -239,46 +218,11 @@
                                          (values (cadr field) (car field)))
                                    `(,test (,getter object1) (,getter object2))))
                                fields)))))
-  (define-equality date= date-year date-month date-day)
-  (define-equality time= time-hour time-minute time-second time-nanos)
-  (define-equality instant= instant-epoch-second instant-nanos)
-  (define-equality duration= duration-seconds duration-nanos)
-  (define-equality timestamp= (timestamp-date date=) (timestamp-time time=)))
-
-(declaim (inline date/= datey< date<= date>= date> time/= time< time<= time>= time>
-                 timestamp/= timestamp< timestamp<= timestamp>= timestamp>
-                 instant/= instant< instant<= instant>= instant>
-                 duration/= duration< duration<= duration>= duration>))
-
-(defun date/= (object1 object2) (not (date= object1 object2)))
-(defun date< (object1 object2) (< (compare-dates object1 object2) 0))
-(defun date<= (object1 object2) (<= (compare-dates object1 object2) 0))
-(defun date>= (object1 object2) (>= (compare-dates object1 object2) 0))
-(defun date> (object1 object2) (> (compare-dates object1 object2) 0))
-
-(defun time/= (object1 object2) (not (time= object1 object2)))
-(defun time< (object1 object2) (< (compare-times object1 object2) 0))
-(defun time<= (object1 object2) (<= (compare-times object1 object2) 0))
-(defun time>= (object1 object2) (>= (compare-times object1 object2) 0))
-(defun time> (object1 object2) (> (compare-times object1 object2) 0))
-
-(defun timestamp/= (object1 object2) (not (timestamp= object1 object2)))
-(defun timestamp< (object1 object2) (< (compare-timestamps object1 object2) 0))
-(defun timestamp<= (object1 object2) (<= (compare-timestamps object1 object2) 0))
-(defun timestamp>= (object1 object2) (>= (compare-timestamps object1 object2) 0))
-(defun timestamp> (object1 object2) (> (compare-timestamps object1 object2) 0))
-
-(defun instant/= (object1 object2) (not (instant= object1 object2)))
-(defun instant< (object1 object2) (< (compare-instants object1 object2) 0))
-(defun instant<= (object1 object2) (<= (compare-instants object1 object2) 0))
-(defun instant>= (object1 object2) (>= (compare-instants object1 object2) 0))
-(defun instant> (object1 object2) (> (compare-instants object1 object2) 0))
-
-(defun duration/= (object1 object2) (not (duration= object1 object2)))
-(defun duration< (object1 object2) (< (compare-durations object1 object2) 0))
-(defun duration<= (object1 object2) (<= (compare-durations object1 object2) 0))
-(defun duration>= (object1 object2) (>= (compare-durations object1 object2) 0))
-(defun duration> (object1 object2) (> (compare-durations object1 object2) 0))
+  (define-equality date-equal date-year date-month date-day)
+  (define-equality time-equal time-hour time-minute time-second time-nanos)
+  (define-equality instant-equal instant-epoch-second instant-nanos)
+  (define-equality duration-equal duration-seconds duration-nanos)
+  (define-equality timestamp-equal (timestamp-date date=) (timestamp-time time=)))
 
 (defun date-hash (object)
   (logand most-positive-fixnum
@@ -313,24 +257,62 @@
   (logand most-positive-fixnum
           (+ (* 31 (duration-seconds object))
              (duration-nanos object))))
-
 
 
-(defvar calendar:midnight (make-time 0 0 0 0))
-(defvar calendar:min-time calendar:midnight)
-(defvar calendar:max-time (make-time 23 59 59 999999999))
-(defvar calendar:noon (make-time 12 0 0 0))
-(defvar calendar:min-date (make-date calendar:min-year 1 1))
-(defvar calendar:max-date (make-date calendar:max-year 12 31))
-(defvar calendar:epoch-date (make-date 2000 3 1))
-(defvar calendar:min-timestamp (make-timestamp calendar:min-date calendar:min-time))
-(defvar calendar:max-timestamp (make-timestamp calendar:max-date calendar:max-time))
-(defvar calendar:epoch-timestamp (make-timestamp calendar:epoch-date calendar:midnight))
-(defvar calendar:min-instant (make-instant calendar:min-epoch-second 0))
-(defvar calendar:max-instant (make-instant calendar:max-epoch-second 999999999))
-(defvar calendar:epoch-instant (make-instant 0 0))
-(defvar calendar:zero-duration (make-duration 0 0))
-(defvar calendar:epsilon-duration (make-duration 0 1))
+(defvar +midnight+ (make-time 0 0 0 0))
+(defvar +min-time+ +midnight+)
+(defvar +max-time+ (make-time 23 59 59 999999999))
+(defvar +noon+ (make-time 12 0 0 0))
+(defvar +min-date+ (make-date calendar:min-year 1 1))
+(defvar +max-date+ (make-date calendar:max-year 12 31))
+(defvar +epoch-date+ (make-date 2000 3 1))
+(defvar +min-timestamp+ (make-timestamp +min-date+ +min-time+))
+(defvar +max-timestamp+ (make-timestamp +max-date+ +max-time+))
+(defvar +epoch-timestamp+ (make-timestamp +epoch-date+ +midnight+))
+(defvar +min-instant+ (make-instant calendar:min-epoch-second 0))
+(defvar +max-instant+ (make-instant calendar:max-epoch-second 999999999))
+(defvar +epoch-instant+ (make-instant 0 0))
+(defvar +zero-duration+ (make-duration 0 0))
+(defvar +epsilon-duration+ (make-duration 0 1))
+
+
+(defmethod make-load-form ((object calendar:date) &optional environment)
+  (declare (ignore environment))
+  (cond
+    ((date-equal object +min-date+) '+min-date+)
+    ((date-equal object +max-date+) '+max-date+)
+    ((date-equal object +epoch-date+) '+epoch-date+)
+    (t `(make-date ,(date-year object) ,(date-month object) ,(date-day object) ,(date-%weekday object)))))
+
+(defmethod make-load-form ((object calendar:time) &optional environment)
+  (declare (ignore environment))
+  (cond
+    ((time-equal object +min-time+) '+min-time+)
+    ((time-equal object +max-time+) '+max-time+)
+    (t `(make-time ,(time-hour object) ,(time-minute object) ,(time-second object) ,(time-nanos object)))))
+
+(defmethod make-load-form ((object calendar:timestamp) &optional environment)
+  (declare (ignore environment))
+  (cond
+    ((timestamp-equal object +min-timestamp+) '+min-timestamp+)
+    ((timestamp-equal object +max-timestamp+) '+max-timestamp+)
+    ((timestamp-equal object +epoch-timestamp+) '+epoch-timestamp+)
+    (t `(make-timestamp ,(timestamp-date object) ,(timestamp-time object)))))
+
+(defmethod make-load-form ((object calendar:instant) &optional environment)
+  (declare (ignore environment))
+  (cond
+    ((instant-equal object +min-instant+) '+min-instant+)
+    ((instant-equal object +max-instant+) '+max-instant+)
+    ((instant-equal object +epoch-instant+) '+epoch-instant+)
+    (t `(make-instant ,(instant-epoch-second object) ,(instant-nanos object)))))
+
+(defmethod make-load-form ((object calendar:duration) &optional environment)
+  (declare (ignore environment))
+  (cond
+    ((duration-equal object +zero-duration+) '+zero-duration+)
+    ((duration-equal object +epsilon-duration+) '+epsilon-duration+)
+    (t `(make-duration ,(duration-seconds object) ,(duration-nanos object)))))
 
 
 (defun print-date-fields (year month day stream)
@@ -438,13 +420,12 @@
   (declare (ignore zone))
   (instant-epoch-second object))
 
-(defmethod calendar:seconds ((object calendar:instant)) (instant-epoch-second object))
 (defmethod calendar:seconds ((object calendar:duration)) (duration-seconds object))
 
-(defmethod calendar:equal ((object1 calendar:date) (object2 calendar:date)) (date= object1 object2))
-(defmethod calendar:equal ((object1 calendar:time) (object2 calendar:time)) (time= object1 object2))
-(defmethod calendar:equal ((object1 calendar:timestamp) (object2 calendar:timestamp)) (timestamp= object1 object2))
-(defmethod calendar:equal ((object1 calendar:instant) (object2 calendar:instant)) (instant= object1 object2))
+(defmethod calendar:equal ((object1 calendar:date) (object2 calendar:date)) (date-equal object1 object2))
+(defmethod calendar:equal ((object1 calendar:time) (object2 calendar:time)) (time-equal object1 object2))
+(defmethod calendar:equal ((object1 calendar:timestamp) (object2 calendar:timestamp)) (timestamp-equal object1 object2))
+(defmethod calendar:equal ((object1 calendar:instant) (object2 calendar:instant)) (instant-equal object1 object2))
 
 (defmethod calendar:hash ((object calendar:date)) (date-hash object))
 (defmethod calendar:hash ((object calendar:time)) (time-hash object))

@@ -44,29 +44,14 @@
            #:conversion-error #:conversion-error-timestamp #:conversion-error-zone
            #:conversion-error-candidates #:conversion-error-period-start
            #:conversion-error-period-end #:return-instant #:use-offset #:plusp
-           #:minusp #:zerop #:offset-before #:offset-after #:transition #:transitionp)
+           #:minusp #:zerop #:utc-zone)
   (:documentation "The consumer-level API of this library."))
 
 (defpackage #:deterministic-arts.calendar.internals
   (:use #:common-lisp #:alexandria #:bordeaux-threads)
   (:import-from #:trivial-garbage #:make-weak-hash-table)
   (:local-nicknames (#:calendar #:deterministic-arts.calendar))
-  (:export #:date-year #:date-month #:date-day #:date-weekday #:time-hour
-           #:time-minute #:time-second #:time-nanos #:instant-epoch-second
-           #:instant-nanos #:duration-seconds #:duration-nanos #:timestamp-year
-           #:timestamp-month #:timestamp-day #:timestamp-hour #:timestamp-minute
-           #:timestamp-second #:timestamp-nanos #:timestamp-weekday #:compare-dates
-           #:compare-times #:compare-timestamps #:compare-instants #:compare-durations
-           #:date-hash #:time-hash #:timestamp-hash #:instant-hash #:duration-hash
-           #:date= #:date/= #:date< #:date<= #:date>= #:date> #:time= #:time/=
-           #:time< #:time<= #:time>= #:time> #:timestamp= #:timestamp/=
-           #:timestamp< #:timestamp<= #:timestamp>= #:timestamp> #:duration=
-           #:duration/= #:duration< #:duration<= #:duration>= #:duration>
-           #:duration-minusp #:duration-zerop #:duration-plusp
-           #:resolve-zone #:compute-zone-offset #:utc-epoch-second-and-nanos
-           #:transition-timestamp #:transition-epoch-second #:transition-offset-before
-           #:transition-offset-after #:transition-duration #:transition-gap-p
-           #:transition-overlap-p)
+  (:export #:resolve-zone #:compute-zone-offset)
   (:documentation "The service-provider-level API of this library. May also be
 occasionally useful for plain consumers, but mostly intended to be used by code
 implementing new time zones, etc."))
