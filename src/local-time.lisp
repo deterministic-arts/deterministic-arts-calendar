@@ -28,22 +28,22 @@
 
 (in-package #:deterministic-arts.calendar.local-time-support)
 
-(defmethod c:instant ((object lt:timestamp) &key zone date time)
-  (declare (ignore zone date time))
+(defmethod c:epoch-second ((object lt:timestamp) &optional zone)
+  (declare (ignore zone))
+  (+ (* (lt:day-of object) ci::seconds-per-day) (lt:sec-of object)))
+
+(defmethod c:instant ((object lt:timestamp))
   (c:make-instant (+ (* (lt:day-of object) ci::seconds-per-day) (lt:sec-of object))
                   (lt:nsec-of object)))
 
-(defmethod c:timestamp ((object lt:timestamp) &key zone date time)
-  (declare (ignore date time))
-  (c:timestamp (c:instant object) :zone zone))
+(defmethod c:timestamp ((object lt:timestamp))
+  (c:timestamp (c:instant object)))
 
-(defmethod c:date ((object lt:timestamp) &key zone date time)
-  (declare (ignore date time))
-  (c:date (c:instant object) :zone zone))
+(defmethod c:date ((object lt:timestamp))
+  (c:date (c:instant object)))
 
-(defmethod c:time ((object lt:timestamp) &key zone date time)
-  (declare (ignore date time))
-  (c:time (c:instant object) :zone zone))
+(defmethod c:time ((object lt:timestamp))
+  (c:time (c:instant object)))
 
 (defgeneric to-local-time (object &key zone date time))
 
