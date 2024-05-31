@@ -97,6 +97,9 @@
 
 (defgeneric calendar:add-seconds (object seconds &optional nanos))
 
+(defgeneric calendar:offset-before (object))
+(defgeneric calendar:offset-after (object))
+
 (defgeneric resolve-zone (name &optional arguments))
 
 (defgeneric compute-zone-offset (moment zone)
@@ -168,7 +171,8 @@
 (define-condition calendar:ambiguous-timestamp (calendar:conversion-error)
   ()
   (:report (lambda (object stream)
-             (format stream "the conversion of ~A to an instant using ~S is ambiguous due to an overlapping period between ~A and ~A during a zone offset transition~@[; ~
+             (format stream "the conversion of ~A to an instant using ~S is ambiguous due to an overlapping ~
+                             period between ~A and ~A during a zone offset transition~@[; ~
                              potential candidates are ~{~A~^, ~}~]"
                      (calendar:conversion-error-timestamp object)
                      (calendar:conversion-error-zone object)
@@ -179,7 +183,8 @@
 (define-condition calendar:undefined-timestamp (calendar:conversion-error)
   ()
   (:report (lambda (object stream)
-             (format stream "the conversion of ~A to an instant using ~S is undefined due to a skipped period between ~A and ~A during a zone offset transition~@[; ~
+             (format stream "the conversion of ~A to an instant using ~S is undefined due to a skipped ~
+                             period between ~A and ~A during a zone offset transition~@[; ~
                              potential candidates are ~{~A~^, ~}~]"
                      (calendar:conversion-error-timestamp object)
                      (calendar:conversion-error-zone object)

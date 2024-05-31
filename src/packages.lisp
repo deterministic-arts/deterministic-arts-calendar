@@ -44,7 +44,7 @@
            #:conversion-error #:conversion-error-timestamp #:conversion-error-zone
            #:conversion-error-candidates #:conversion-error-period-start
            #:conversion-error-period-end #:return-instant #:use-offset #:plusp
-           #:minusp #:zerop)
+           #:minusp #:zerop #:offset-before #:offset-after #:transition #:transitionp)
   (:documentation "The consumer-level API of this library."))
 
 (defpackage #:deterministic-arts.calendar.internals
@@ -63,7 +63,10 @@
            #:timestamp< #:timestamp<= #:timestamp>= #:timestamp> #:duration=
            #:duration/= #:duration< #:duration<= #:duration>= #:duration>
            #:duration-minusp #:duration-zerop #:duration-plusp
-           #:resolve-zone #:compute-zone-offset #:utc-epoch-second-and-nanos)
+           #:resolve-zone #:compute-zone-offset #:utc-epoch-second-and-nanos
+           #:transition-timestamp #:transition-epoch-second #:transition-offset-before
+           #:transition-offset-after #:transition-duration #:transition-gap-p
+           #:transition-overlap-p)
   (:documentation "The service-provider-level API of this library. May also be
 occasionally useful for plain consumers, but mostly intended to be used by code
 implementing new time zones, etc."))

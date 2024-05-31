@@ -70,4 +70,33 @@
 (defmethod calendar:hash ((object fixed-offset-zone))
   (logand most-positive-fixnum (+ (* 31 fixed-zone-base-hash) (slot-value object 'offset))))
 
+
 
+(defstruct (calendar:transition (:copier nil) (:conc-name transition-) (:predicate calendar:transitionp)
+                                (:constructor make-transition (epoch-second timestamp offset-before offset-after)))
+  (epoch-second 0 :type calendar:epoch-second :read-only t)
+  (timestamp (error "missing") :type calendar:timestamp :read-only t)
+  (offset-before 0 :type integer :read-only t)
+  (offset-after 0 :type integer :read-only t))
+
+(defmethod calendar:epoch-second ((object calendar:transition) &optional zone)
+  (declare (ignore zone))
+  (transition-epoch-second object))
+
+(defmethod calendar:timestamp ((object calendar:transition))
+  (transition-timestamp object))
+
+(defmethod calendar:offset-before ((object calendar:transition))
+  (transition-offset-before object))
+
+(defmethod calendar:offset-after ((object calendar:transition))
+  (transition-offset-before object))
+
+(defun transition-duration ((object calendar:transition))
+  (- (transition-offset-after object) (transition-offset-before object)))
+
+(defun transition-gap-p (object)
+  (< (transition-offset-before object) (transition-offset-after object)))
+
+(defun transition-overlap-p (object)
+  (> (transition-offset-before object) (transition-offset-after object)))
