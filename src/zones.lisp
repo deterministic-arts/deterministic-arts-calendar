@@ -22,7 +22,6 @@
          :datum object :expected-type 'calendar:zone
          :format-control "~S is not a supported ~S designator"
          :format-arguments (list object 'calendar:zone)))
-
 
 
 (defclass fixed-offset-zone (calendar:zone)
@@ -31,6 +30,13 @@
 (defconstant fixed-zone-base-hash (sxhash 'fixed-offset-zone))
 
 (defvar *fixed-offset-zone-cache-lock* (make-lock "Fixed-Offset Zone Table"))
+
+;;; XXX: trivial garbage does odd things on Clasp according to the source
+;;;      code, unconditionally replacing the TEST function with EQ if any
+;;;      kind of weakness is requested (for CCL, the TEST is replaced only
+;;;      for weak keys -- that's better, though I'd still prefer an error
+;;;      to be signalled if the TEST is not EQ if such a constraint exists
+;;;      for a concrete implementation, as it does with CCL.)
 (defvar *fixed-offset-zones* (make-weak-hash-table :test #'eql))
 
 (defun make-fixed-offset-zone (offset)
