@@ -37,7 +37,7 @@
 ;;;      for weak keys -- that's better, though I'd still prefer an error
 ;;;      to be signalled if the TEST is not EQ if such a constraint exists
 ;;;      for a concrete implementation, as it does with CCL.)
-(defvar *fixed-offset-zones* (make-weak-hash-table :test #'eql))
+(defvar *fixed-offset-zones* (make-weak-hash-table :weakness :value :test #'eql))
 
 (defun make-fixed-offset-zone (offset)
   (let ((offset (etypecase offset ((integer #.(* -1 60 60 25) #.(* 60 60 25)) offset))))
