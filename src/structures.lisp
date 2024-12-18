@@ -120,6 +120,10 @@
   (make-timestamp (calendar:make-date year month day)
                   (calendar:make-time hour minute second nanos)))
 
+(defun calendar:make-timestamp* (date time)
+  (make-timestamp (calendar:date date)
+                  (calendar:time time)))
+
 (defun calendar:make-instant (epoch-second &optional (nanos 0))
   (make-instant (check-epoch-second epoch-second)
                 (check-nanos nanos)))

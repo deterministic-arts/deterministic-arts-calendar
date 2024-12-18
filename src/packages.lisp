@@ -45,7 +45,8 @@
            #:conversion-error-candidates #:conversion-error-period-start
            #:conversion-error-period-end #:return-instant #:use-offset #:plusp
            #:minusp #:zerop #:utc-zone #:print-date #:print-time #:print-timestamp
-           #:print-instant #:parse-date #:parse-time #:parse-timestamp #:parse-instant)
+           #:print-instant #:parse-date #:parse-time #:parse-timestamp #:parse-instant
+           #:make-timestamp*)
   (:documentation "The consumer-level API of this library."))
 
 (defpackage #:deterministic-arts.calendar.internals
