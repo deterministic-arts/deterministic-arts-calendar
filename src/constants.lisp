@@ -30,10 +30,25 @@
 ;; control that nobody modifies the values)
 ;;
 ;; The lisp system is allowed to evaluate the constant values at compile-time,
-;; which is the reason for these shenanigans. I would love for there to
-;; be some kind of `defimmutable` which would act like `defvar` but also
-;; proclaim the binding constant once it has been established. Alas, it is
-;; what it is...
+;; which is the reason for these shenanigans: during compile time, a form
+;;
+;;  (defconstant calendar:min-time (make-time ...))
+;;
+;; may fail, since the function make-time is not defined (yet). Further
+;; more, the compiler might need the help of the make-load-form methods
+;; in order to dump the values into the fasl which are also not (yet)
+;; defined during compile time.
+;;
+;; So, internally, we use the +xxx+ variables, carefully ensuring, that
+;; those are never re-assigned or bound. For the application using this
+;; library, we want the values exposed as constants, though. Hence the
+;; trick with the early and late modules in the ASDF file. Almost everything
+;; is in "early". After early is compiled it is loaded to provide the machinery
+;; required in order for the compiler to be able to handle the following
+;; definitions.
+;;
+;; To the outside world, nothing special is going on. The constants are
+;; provided like any other constants, and all the hacking is gone.
 
 (defconstant calendar:min-time +min-time+)
 (defconstant calendar:max-time +max-time+)
