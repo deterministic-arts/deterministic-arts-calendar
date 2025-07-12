@@ -82,6 +82,7 @@
 (defgeneric calendar:date (object))
 (defgeneric calendar:time (object))
 (defgeneric calendar:timestamp (object))
+(defgeneric calendar:duration (object))
 
 (defgeneric calendar:compare (object1 object2))
 

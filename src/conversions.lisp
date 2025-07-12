@@ -35,7 +35,7 @@
 
 (defmethod calendar:epoch-second ((object calendar:timestamp) &optional (zone 't))
   (let ((offset (if (or (not zone) (eq zone +utc-zone+)) 0 (compute-zone-offset object zone)))
-        (second (encode-epoch-second (timstamp-year object) (timestamp-month object) (timestamp-day object)
+        (second (encode-epoch-second (timestamp-year object) (timestamp-month object) (timestamp-day object)
                                      (timestamp-hour object) (timestamp-minute object) (timestamp-second object))))
     (- second offset)))
 
@@ -156,3 +156,21 @@
 (defmethod calendar:time ((object calendar:time))
   object)
 
+(defmethod calendar:duration ((object calendar:duration))
+  object)
+
+(defmethod calendar:date ((object string))
+  (or (calendar:parse-date object)
+      (call-next-method)))
+
+(defmethod calendar:time ((object string))
+  (or (calendar:parse-time object)
+      (call-next-method)))
+
+(defmethod calendar:timestamp ((object string))
+  (or (calendar:parse-timestamp object)
+      (call-next-method)))
+
+(defmethod calendar:instant ((object string))
+  (or (calendar:parse-instant object)
+      (call-next-method)))
